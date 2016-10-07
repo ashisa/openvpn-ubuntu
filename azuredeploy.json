@@ -276,8 +276,8 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('ovpn_installScriptFilePath'), parameters('_artifactsLocationSasToken'))]"
-              ],
+                "https://raw.githubusercontent.com/ashisa/openvpn-ubuntu/master/ovpn_install.sh"
+              ]
             },
             "protectedSettings": {
               "commandToExecute": "[concat('sh ', variables('ovpn_installScriptFileName'), ' ', parameters('ovpnsrvAdminPassword'), ' ', parameters('ovpnCACountryCode'), ' ', parameters('ovpnCAProvince'), ' ', parameters('ovpnCACity'), ' ', parameters('ovpnCAOrgName'), ' ', parameters('ovpnCAEmail'), ' ', parameters('ovpnCAOU'), ' ', parameters('ovpnProtocol'), ' ', parameters('ovpnPort'), ' ', parameters('ovpnAllTraffic'))]"
