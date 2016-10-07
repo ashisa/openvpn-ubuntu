@@ -1,0 +1,311 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "ovpnsrvstorageType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "ovpnsrvName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ovpnsrvAdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ovpnsrvAdminPassword": {
+      "type": "securestring"
+    },
+    "ovpnsrvUbuntuOSVersion": {
+      "type": "string",
+      "defaultValue": "14.04.2-LTS",
+      "allowedValues": [
+        "12.04.5-LTS",
+        "14.04.2-LTS"
+      ]
+    },
+    "ovpnsrvpipDnsName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ovpnCACountryCode": {
+      "type": "string",
+      "minLength": 2,
+      "metadata": {
+        "description": "2-letter country code for OpenVPN CA"
+      }
+    },
+    "ovpnCAProvince": {
+      "type": "string",
+      "minLength": 2,
+      "metadata": {
+        "description": "2-letter province name for OpenVPN CA"
+      }
+    },
+    "ovpnCACity": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "City name to go with the OpenVPN CA"
+      }
+    },
+    "ovpnCAOrgName": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Organization name for OpenVPN CA"
+      }
+    },
+    "ovpnCAEmail": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Email address for the OpenVPN CA"
+      }
+    },
+    "ovpnCAOU": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "Organization Unit name for the OpenVPN CA"
+      }
+    },
+    "ovpnProtocol": {
+      "type": "string",
+      "defaultValue": "tcp",
+      "allowedValues": [
+        "tcp",
+        "udp"
+      ],
+      "metadata": {
+        "description": "Select the protocol to use for VPN connections"
+      }
+    },
+    "ovpnPort": {
+      "type": "string",
+      "minLength": 3,
+      "metadata": {
+        "description": "Port number to use for VPN connections"
+      }
+    },
+    "ovpnAllTraffic": {
+      "type": "string",
+      "defaultValue": "yes",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Select yes if you wish the redirect all traffic from the VPN clients through teh VPN server"
+      }
+    },
+    "ovpnSubnets": {
+      "type": "string",
+      "minLength": 1,
+      "metadata": {
+        "description": "If you are not routing all the traffic through VPN, enter the internal subnet separated by ';' to add the routes for them on the clients. For example, 10.0.1.0 255.255.255.0;10.0.2.0 255.255.255.0"
+      }
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    }
+  },
+  "variables": {
+    "ovpnsrvstorageName": "[concat('ovpnsrvstorage', uniqueString(resourceGroup().id))]",
+    "ovpnsrvvnetPrefix": "10.0.0.0/16",
+    "ovpnsrvvnetSubnet1Name": "Subnet-1",
+    "ovpnsrvvnetSubnet1Prefix": "10.0.0.0/24",
+    "ovpnsrvImagePublisher": "Canonical",
+    "ovpnsrvImageOffer": "UbuntuServer",
+    "ovpnsrvOSDiskName": "ovpnsrvOSDisk",
+    "ovpnsrvVmSize": "Standard_D1",
+    "ovpnsrvVnetID": "[resourceId('Microsoft.Network/virtualNetworks', 'ovpnsrvvnet')]",
+    "ovpnsrvSubnetRef": "[concat(variables('ovpnsrvVnetID'), '/subnets/', variables('ovpnsrvvnetSubnet1Name'))]",
+    "ovpnsrvStorageAccountContainerName": "vhds",
+    "ovpnsrvNicName": "[concat(parameters('ovpnsrvName'), 'NetworkInterface')]",
+    "ovpnsrvpipName": "ovpnsrvpip",
+    "ovpn_installScriptFileName": "ovpn_install.sh",
+    "ovpn_installScriptFilePath": "[concat('OpenVPN/CustomScripts/', variables('ovpn_installScriptFileName'))]"
+  },
+  "resources": [
+    {
+      "name": "[variables('ovpnsrvstorageName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "ovpnsrvstorage"
+      },
+      "properties": {
+        "accountType": "[parameters('ovpnsrvstorageType')]"
+      }
+    },
+    {
+      "name": "ovpnsrvvnet",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "ovpnsrvvnet"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('ovpnsrvvnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('ovpnsrvvnetSubnet1Name')]",
+            "properties": {
+              "addressPrefix": "[variables('ovpnsrvvnetSubnet1Prefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('ovpnsrvNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', 'ovpnsrvvnet')]",
+        "[concat('Microsoft.Network/publicIPAddresses/', variables('ovpnsrvpipName'))]"
+      ],
+      "tags": {
+        "displayName": "ovpnsrvNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('ovpnsrvSubnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('ovpnsrvpipName'))]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('ovpnsrvName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[concat('Microsoft.Storage/storageAccounts/', variables('ovpnsrvstorageName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('ovpnsrvNicName'))]"
+      ],
+      "tags": {
+        "displayName": "ovpnsrv"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('ovpnsrvVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('ovpnsrvName')]",
+          "adminUsername": "[parameters('ovpnsrvAdminUsername')]",
+          "adminPassword": "[parameters('ovpnsrvAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('ovpnsrvImagePublisher')]",
+            "offer": "[variables('ovpnsrvImageOffer')]",
+            "sku": "[parameters('ovpnsrvUbuntuOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "ovpnsrvOSDisk",
+            "vhd": {
+              "uri": "[concat('http://', variables('ovpnsrvstorageName'), '.blob.core.windows.net/', variables('ovpnsrvStorageAccountContainerName'), '/', variables('ovpnsrvOSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('ovpnsrvNicName'))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "ovpn_install",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2015-06-15",
+          "dependsOn": [
+            "[concat('Microsoft.Compute/virtualMachines/', parameters('ovpnsrvName'))]"
+          ],
+          "tags": {
+            "displayName": "ovpn_install"
+          },
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('ovpn_installScriptFilePath'), parameters('_artifactsLocationSasToken'))]"
+              ],
+            },
+            "protectedSettings": {
+              "commandToExecute": "[concat('sh ', variables('ovpn_installScriptFileName'), ' ', parameters('ovpnsrvAdminPassword'), ' ', parameters('ovpnCACountryCode'), ' ', parameters('ovpnCAProvince'), ' ', parameters('ovpnCACity'), ' ', parameters('ovpnCAOrgName'), ' ', parameters('ovpnCAEmail'), ' ', parameters('ovpnCAOU'), ' ', parameters('ovpnProtocol'), ' ', parameters('ovpnPort'), ' ', parameters('ovpnAllTraffic'))]"
+            }
+          }
+        }
+
+
+      ]
+    },
+    {
+      "name": "[variables('ovpnsrvpipName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [ ],
+      "tags": {
+        "displayName": "ovpnsrvpip"
+      },
+      "properties": {
+
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('ovpnsrvpipDnsName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
