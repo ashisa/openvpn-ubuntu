@@ -33,7 +33,7 @@ sed -i "s/`grep KEY_NAME vars`/export KEY_NAME=\"$userKeyName\"/g" vars
 
 echo Sourcing the vars file
 cd ~/openvpn-ca
-source ./vars
+. ./vars
 
 echo Building root CA
 ./clean-all
@@ -73,7 +73,7 @@ openvpn --genkey --secret keys/ta.key
 
 echo Generating Client Certificate and Key Pair
 cd ~/openvpn-ca
-source ./vars
+. ./vars
 ./build-key client <<EOF
 
 
