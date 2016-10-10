@@ -19,7 +19,7 @@ y
 EOF
 
 echo Creating CA directory structure
-make-cadir ~/openvpn-ca
+sudo make-cadir ~/openvpn-ca
 cd ~/openvpn-ca
 
 echo Modifying the values to be populated in the Certificate
@@ -36,8 +36,8 @@ cd ~/openvpn-ca
 . ./vars
 
 echo Building root CA
-./clean-all
-./build-ca <<EOF
+sudo ./clean-all
+sudo ./build-ca <<EOF
 
 
 
@@ -49,7 +49,7 @@ echo Building root CA
 EOF
 
 echo Generating server certificate
-./build-key-server server <<EOF
+sudo ./build-key-server server <<EOF
 
 
 
@@ -65,7 +65,7 @@ y
 EOF
 
 echo Building the DH keys
-./build-dh
+sudo ./build-dh
 mkdir -p ~/openvpn-ca/keys
 
 echo Generating HMAC signature
@@ -74,7 +74,7 @@ sudo openvpn --genkey --secret keys/ta.key
 echo Generating Client Certificate and Key Pair
 cd ~/openvpn-ca
 . ./vars
-./build-key client <<EOF
+sudo ./build-key client <<EOF
 
 
 
@@ -94,7 +94,7 @@ cd ~/openvpn-ca/keys
 sudo cp ca.crt ca.key server.crt server.key ta.key dh2048.pem /etc/openvpn
 
 echo Copying sample server configuration to /etc/openvpn
-gunzip -c /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz | sudo tee /etc/openvpn/server.conf >/dev/null
+sudo gunzip -c /usr/share/doc/openvpn/examples/sample-config-files/server.conf.gz | sudo tee /etc/openvpn/server.conf >/dev/null
 
 echo Determining my public ip address
 mypublicip=`dig +short myip.opendns.com @resolver1.opendns.com`
@@ -137,8 +137,8 @@ sudo grep "Initialization Sequence Completed" /var/log/syslog >/dev/null || (ech
 
 echo Creating client configuration
 mkdir -p ~/client-configs/files
-chmod 700 ~/client-configs/files
-cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ~/client-configs/base.conf
+sudo chmod 700 ~/client-configs/files
+sudo cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ~/client-configs/base.conf
 
 sudo sed -i "s/`grep ^remote ~/client-configs/base.conf |grep -v remote-cert-tls`/remote $mypublicip $vpnPort/g" ~/client-configs/base.conf
 sudo sed -i "s/`grep ^proto ~/client-configs/base.conf`/proto $vpnProto/g" ~/client-configs/base.conf
@@ -155,6 +155,6 @@ OUTPUT_DIR=~/client-configs/files
 BASE_CONFIG=~/client-configs/base.conf
 
 
-cat ${BASE_CONFIG} <(echo -e '<ca>') ${KEY_DIR}/ca.crt <(echo -e '</ca>\n<cert>') ${KEY_DIR}/client.crt <(echo -e '</cert>\n<key>') ${KEY_DIR}/client.key <(echo -e '</key>\n<tls-auth>') ${KEY_DIR}/ta.key <(echo -e '</tls-auth>') > ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo cat ${BASE_CONFIG} <(echo -e '<ca>') ${KEY_DIR}/ca.crt <(echo -e '</ca>\n<cert>') ${KEY_DIR}/client.crt <(echo -e '</cert>\n<key>') ${KEY_DIR}/client.key <(echo -e '</key>\n<tls-auth>') ${KEY_DIR}/ta.key <(echo -e '</tls-auth>') > ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
 
 echo "OpenVPN Server configuration completed. Client configuration file can be found at ${OUTPUT_DIR}"
