@@ -128,7 +128,7 @@
     }
   },
   "variables": {
-    "ovpnsrvstorageName": "[concat('ovpnsrvstorage', uniqueString(resourceGroup().id))]",
+    "ovpnsrvstorageName": "[concat('ovpnsrvstorage')]",
     "ovpnsrvvnetPrefix": "10.0.0.0/16",
     "ovpnsrvvnetSubnet1Name": "Subnet-1",
     "ovpnsrvvnetSubnet1Prefix": "10.0.0.0/24",

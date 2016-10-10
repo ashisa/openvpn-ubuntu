@@ -14,7 +14,9 @@ userKeyName=server
 
 echo Installing openvpn and EasyRSA packages
 sudo apt-get update
-sudo apt-get install openvpn easy-rsa
+sudo apt-get install openvpn easy-rsa <<EOF
+y
+EOF
 
 echo Creating CA directory structure
 make-cadir ~/openvpn-ca
