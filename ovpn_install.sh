@@ -11,6 +11,7 @@ vpnProto=$8
 vpnPort=$9
 vpnAllTraffic=$10
 userKeyName=server
+workingdir=$PWD
 
 echo Installing openvpn and EasyRSA packages
 sudo apt-get update
@@ -19,8 +20,8 @@ y
 EOF
 
 echo Creating CA directory structure
-sudo make-cadir ~/openvpn-ca
-cd ~/openvpn-ca
+sudo make-cadir $workingdir/openvpn-ca
+cd $workingdir/openvpn-ca
 
 echo Modifying the values to be populated in the Certificate
 sed -i "s/`grep KEY_COUNTRY vars`/export KEY_COUNTRY=\"$userCountry\"/g" vars
@@ -32,7 +33,7 @@ sed -i "s/`grep KEY_OU vars`/export KEY_OU=\"$userOU\"/g" vars
 sed -i "s/`grep KEY_NAME vars`/export KEY_NAME=\"$userKeyName\"/g" vars
 
 echo Sourcing the vars file
-cd ~/openvpn-ca
+cd $workingdir/openvpn-ca
 . ./vars
 
 echo Building root CA
@@ -66,13 +67,14 @@ EOF
 
 echo Building the DH keys
 sudo ./build-dh
-mkdir -p ~/openvpn-ca/keys
+mkdir -p $workingdir/openvpn-ca/keys
 
 echo Generating HMAC signature
 sudo openvpn --genkey --secret keys/ta.key
+sudo chmod 644 keys/.rnd
 
 echo Generating Client Certificate and Key Pair
-cd ~/openvpn-ca
+cd $workingdir/openvpn-ca
 . ./vars
 sudo ./build-key client <<EOF
 
@@ -90,7 +92,7 @@ y
 EOF
 
 echo Copying files to the openvpn directory
-cd ~/openvpn-ca/keys
+cd $workingdir/openvpn-ca/keys
 sudo cp ca.crt ca.key server.crt server.key ta.key dh2048.pem /etc/openvpn
 
 echo Copying sample server configuration to /etc/openvpn
@@ -136,23 +138,23 @@ sudo systemctl start openvpn@server
 sudo grep "Initialization Sequence Completed" /var/log/syslog >/dev/null || (echo OpenVPN initialization failed)
 
 echo Creating client configuration
-mkdir -p ~/client-configs/files
-sudo chmod 700 ~/client-configs/files
-sudo cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf ~/client-configs/base.conf
+mkdir -p $workingdir/client-configs/files
+sudo chmod 700 $workingdir/client-configs/files
+sudo cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf $workingdir/client-configs/base.conf
 
-sudo sed -i "s/`grep ^remote ~/client-configs/base.conf |grep -v remote-cert-tls`/remote $mypublicip $vpnPort/g" ~/client-configs/base.conf
-sudo sed -i "s/`grep ^proto ~/client-configs/base.conf`/proto $vpnProto/g" ~/client-configs/base.conf
-sudo sed -i "s/`grep user ~/client-configs/base.conf`/user nobody/g" ~/client-configs/base.conf
-sudo sed -i "s/`grep group ~/client-configs/base.conf`/group nogroup/g" ~/client-configs/base.conf
-sudo sed -i "s/`grep ^ca ~/client-configs/base.conf`/#ca ca.crt/g" ~/client-configs/base.conf
-sudo sed -i "s/`grep ^cert ~/client-configs/base.conf`/#cert client.crt/g" ~/client-configs/base.conf
-sudo sed -i "s/`grep ^key ~/client-configs/base.conf`/#key client.key/g" ~/client-configs/base.conf
-sudo sed -i "s/`grep ^\;cipher ~/client-configs/base.conf`/cipher AES-128-CBC\nauth SHA256\nkey-direction 1/g" ~/client-configs/base.conf
+sudo sed -i "s/`grep ^remote $workingdir/client-configs/base.conf |grep -v remote-cert-tls`/remote $mypublicip $vpnPort/g" $workingdir/client-configs/base.conf
+sudo sed -i "s/`grep ^proto $workingdir/client-configs/base.conf`/proto $vpnProto/g" $workingdir/client-configs/base.conf
+sudo sed -i "s/`grep user $workingdir/client-configs/base.conf`/user nobody/g" $workingdir/client-configs/base.conf
+sudo sed -i "s/`grep group $workingdir/client-configs/base.conf`/group nogroup/g" $workingdir/client-configs/base.conf
+sudo sed -i "s/`grep ^ca $workingdir/client-configs/base.conf`/#ca ca.crt/g" $workingdir/client-configs/base.conf
+sudo sed -i "s/`grep ^cert $workingdir/client-configs/base.conf`/#cert client.crt/g" $workingdir/client-configs/base.conf
+sudo sed -i "s/`grep ^key $workingdir/client-configs/base.conf`/#key client.key/g" $workingdir/client-configs/base.conf
+sudo sed -i "s/`grep ^\;cipher $workingdir/client-configs/base.conf`/cipher AES-128-CBC\nauth SHA256\nkey-direction 1/g" $workingdir/client-configs/base.conf
 
 echo Creating the client configuration file with embedded certs and keys
-KEY_DIR=~/openvpn-ca/keys
-OUTPUT_DIR=~/client-configs/files
-BASE_CONFIG=~/client-configs/base.conf
+KEY_DIR=$workingdir/openvpn-ca/keys
+OUTPUT_DIR=$workingdir/client-configs/files
+BASE_CONFIG=$workingdir/client-configs/base.conf
 
 
 sudo cat ${BASE_CONFIG} <(echo -e '<ca>') ${KEY_DIR}/ca.crt <(echo -e '</ca>\n<cert>') ${KEY_DIR}/client.crt <(echo -e '</cert>\n<key>') ${KEY_DIR}/client.key <(echo -e '</key>\n<tls-auth>') ${KEY_DIR}/ta.key <(echo -e '</tls-auth>') > ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
