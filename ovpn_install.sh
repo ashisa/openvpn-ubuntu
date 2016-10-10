@@ -73,7 +73,7 @@ openvpn --genkey --secret keys/ta.key
 
 echo Generating Client Certificate and Key Pair
 cd ~/openvpn-ca
-source vars
+source ./vars
 ./build-key client <<EOF
 
 
