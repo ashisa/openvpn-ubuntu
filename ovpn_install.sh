@@ -69,7 +69,7 @@ echo Building the DH keys
 mkdir -p ~/openvpn-ca/keys
 
 echo Generating HMAC signature
-openvpn --genkey --secret keys/ta.key
+sudo openvpn --genkey --secret keys/ta.key
 
 echo Generating Client Certificate and Key Pair
 cd ~/openvpn-ca
