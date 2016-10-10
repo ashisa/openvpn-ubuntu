@@ -37,7 +37,6 @@ cd $workingdir/openvpn-ca
 . ./vars
 
 echo Building root CA
-sudo ./clean-all
 sudo ./build-ca <<EOF
 
 
