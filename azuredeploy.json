@@ -121,6 +121,7 @@
     "ovpnsrvStorageAccountContainerName": "vhds",
     "ovpnsrvNicName": "[concat(parameters('ovpnsrvName'), 'NetworkInterface')]",
     "ovpnsrvpipName": "ovpnsrvpip",
+    "ovpnsrvnsgName": "[concat(parameters('ovpnsrvName'), 'NSG')]",
     "ovpn_installScriptFileName": "ovpn_install.sh",
     "ovpn_installScriptFilePath": "[concat('OpenVPN/CustomScripts/', variables('ovpn_installScriptFileName'))]"
   },
@@ -187,6 +188,48 @@
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('ovpnsrvpipName'))]"
               }
+            }
+          }
+        ],
+        "networkSecurityGroup": {
+          "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('ovpnsrvnsgName'))]"
+        }
+      }
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('ovpnsrvnsgName')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "displayName": "OpenVPN Network Security Group"
+      },
+      "properties": {
+        "securityRules": [
+          {
+            "name": "openssh",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "openvpn",
+            "properties": {
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "[int(parameters('ovpnPort'))]",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 110,
+              "direction": "Inbound"
             }
           }
         ]
