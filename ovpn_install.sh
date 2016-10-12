@@ -12,6 +12,7 @@ vpnPort=$9
 vpnAllTraffic=$10
 userKeyName=server
 workingdir=/etc/openvpn
+HOSTNAME=`hostname`
 
 echo Installing openvpn and EasyRSA packages
 sudo apt-get update
