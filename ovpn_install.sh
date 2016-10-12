@@ -11,7 +11,7 @@ vpnProto=$8
 vpnPort=$9
 vpnAllTraffic=$10
 userKeyName=server
-workingdir=$PWD
+workingdir=/etc/openvpn
 
 echo Installing openvpn and EasyRSA packages
 sudo apt-get update
@@ -24,71 +24,32 @@ sudo make-cadir $workingdir/openvpn-ca
 cd $workingdir/openvpn-ca
 
 echo Modifying the values to be populated in the Certificate
-sed -i "s/`grep KEY_COUNTRY vars`/export KEY_COUNTRY=\"$userCountry\"/g" vars
-sed -i "s/`grep KEY_PROVINCE vars`/export KEY_PROVINCE=\"$userProvince\"/g" vars
-sed -i "s/`grep KEY_CITY vars`/export KEY_CITY=\"$userCity\"/g" vars
-sed -i "s/`grep KEY_ORG vars`/export KEY_ORG=\"$userOrg\"/g" vars
-sed -i "s/`grep KEY_EMAIL vars`/export KEY_EMAIL=\"$userEmail\"/g" vars
-sed -i "s/`grep KEY_OU vars`/export KEY_OU=\"$userOU\"/g" vars
-sed -i "s/`grep KEY_NAME vars`/export KEY_NAME=\"$userKeyName\"/g" vars
+sed -i "s/`grep KEY_COUNTRY vars`/export KEY_COUNTRY=\"$userCountry\"/g" $workingdir/openvpn-ca/vars
+sed -i "s/`grep KEY_PROVINCE vars`/export KEY_PROVINCE=\"$userProvince\"/g" $workingdir/openvpn-ca/vars
+sed -i "s/`grep KEY_CITY vars`/export KEY_CITY=\"$userCity\"/g" $workingdir/openvpn-ca/vars
+sed -i "s/`grep KEY_ORG vars`/export KEY_ORG=\"$userOrg\"/g" $workingdir/openvpn-ca/vars
+sed -i "s/`grep KEY_EMAIL vars`/export KEY_EMAIL=\"$userEmail\"/g" $workingdir/openvpn-ca/vars
+sed -i "s/`grep KEY_OU vars`/export KEY_OU=\"$userOU\"/g" $workingdir/openvpn-ca/vars
+sed -i "s/`grep KEY_NAME vars`/export KEY_NAME=\"$userKeyName\"/g" $workingdir/openvpn-ca/vars
 
 echo Sourcing the vars file
 cd $workingdir/openvpn-ca
 . ./vars
 
 echo Building root CA
-sudo ./build-ca <<EOF
-
-
-
-
-
-
-
-
-EOF
-
-echo Generating server certificate
-sudo ./build-key-server server <<EOF
-
-
-
-
-
-
-
-
-
-
-y
-y
-EOF
-
-echo Building the DH keys
-sudo ./build-dh
-mkdir -p $workingdir/openvpn-ca/keys
+./clean-all
+echo Building keys
+./build-dh
+echo Creating CA cert and key
+./pkitool --initca
+echo Creating Server cert and key
+./pkitool --server server
+echo Creating client cert and key
+./pkitool client
 
 echo Generating HMAC signature
-sudo openvpn --genkey --secret keys/ta.key
-sudo chmod 644 keys/.rnd
-
-echo Generating Client Certificate and Key Pair
-cd $workingdir/openvpn-ca
-. ./vars
-sudo ./build-key client <<EOF
-
-
-
-
-
-
-
-
-
-
-y
-y
-EOF
+sudo openvpn --genkey --secret $workingdir/openvpn-ca/keys/ta.key
+sudo chmod 644 ./keys/.rnd
 
 echo Copying files to the openvpn directory
 cd $workingdir/openvpn-ca/keys
@@ -156,6 +117,15 @@ OUTPUT_DIR=$workingdir/client-configs/files
 BASE_CONFIG=$workingdir/client-configs/base.conf
 
 
-sudo cat ${BASE_CONFIG} <(echo -e '<ca>') ${KEY_DIR}/ca.crt <(echo -e '</ca>\n<cert>') ${KEY_DIR}/client.crt <(echo -e '</cert>\n<key>') ${KEY_DIR}/client.key <(echo -e '</key>\n<tls-auth>') ${KEY_DIR}/ta.key <(echo -e '</tls-auth>') > ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo cat ${BASE_CONFIG} > ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo echo -e '<ca>' >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo cat ${KEY_DIR}/ca.crt >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo echo -e '</ca>\n<cert>' >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo cat ${KEY_DIR}/client.crt >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo echo -e '</cert>\n<key>' >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo cat ${KEY_DIR}/client.key >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo echo -e '</key>\n<tls-auth>' >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo cat ${KEY_DIR}/ta.key >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
+sudo echo -e '</tls-auth>' >> ${OUTPUT_DIR}/${HOSTNAME}-client.ovpn
 
 echo "OpenVPN Server configuration completed. Client configuration file can be found at ${OUTPUT_DIR}"

@@ -24,14 +24,6 @@
     "ovpnsrvAdminPassword": {
       "type": "securestring"
     },
-    "ovpnsrvUbuntuOSVersion": {
-      "type": "string",
-      "defaultValue": "14.04.2-LTS",
-      "allowedValues": [
-        "12.04.5-LTS",
-        "14.04.2-LTS"
-      ]
-    },
     "ovpnsrvpipDnsName": {
       "type": "string",
       "minLength": 1
@@ -112,18 +104,6 @@
       "minLength": 1,
       "metadata": {
         "description": "If you are not routing all the traffic through VPN, enter the internal subnet separated by ';' to add the routes for them on the clients. For example, 10.0.1.0 255.255.255.0;10.0.2.0 255.255.255.0"
-      }
-    },
-    "_artifactsLocation": {
-      "type": "string",
-      "metadata": {
-        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
-      }
-    },
-    "_artifactsLocationSasToken": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Auto-generated token to access _artifactsLocation"
       }
     }
   },
@@ -237,7 +217,7 @@
           "imageReference": {
             "publisher": "[variables('ovpnsrvImagePublisher')]",
             "offer": "[variables('ovpnsrvImageOffer')]",
-            "sku": "[parameters('ovpnsrvUbuntuOSVersion')]",
+            "sku": "16.04.0-LTS",
             "version": "latest"
           },
           "osDisk": {
