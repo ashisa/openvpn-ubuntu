@@ -100,7 +100,7 @@ sudo grep "Initialization Sequence Completed" /var/log/syslog >/dev/null || (ech
 
 echo Creating client configuration
 mkdir -p $workingdir/client-configs/files
-sudo chmod 700 $workingdir/client-configs/files
+sudo chmod 755 $workingdir/client-configs/files
 sudo cp /usr/share/doc/openvpn/examples/sample-config-files/client.conf $workingdir/client-configs/base.conf
 
 sudo sed -i "s/`grep ^remote $workingdir/client-configs/base.conf |grep -v remote-cert-tls`/remote $mypublicip $vpnPort/g" $workingdir/client-configs/base.conf
