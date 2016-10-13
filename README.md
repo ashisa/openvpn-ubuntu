@@ -4,7 +4,7 @@ Software: OpenVPN
 author: Ashish Sahu
 ---
 
-# ARM template to deploy and configure OpenVPN without intervention
+# ARM template to deploy and configure OpenVPN on Ubuntu 16.0-LTS automatically
 
 This ARM template deploys a Ubuntu 16.04.0-LTS VM and configures the OpenVPN server automatically for you. The custom extension script also creates a client configuration file that can be download and used on  Linux, Mac and Windows machine using any OpenVPN-compatible client to connect to the Azure VNet.
 
