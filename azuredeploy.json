@@ -103,7 +103,7 @@
       "type": "string",
       "minLength": 1,
       "metadata": {
-        "description": "If you are not routing all the traffic through VPN, enter the internal subnet separated by ';' to add the routes for them on the clients. For example, 10.0.1.0 255.255.255.0;10.0.2.0 255.255.255.0"
+        "description": "NOT USED: If you are not routing all the traffic through VPN, enter the internal subnet separated by ';' to add the routes for them on the clients. For example, 10.0.1.0 255.255.255.0;10.0.2.0 255.255.255.0"
       }
     }
   },
