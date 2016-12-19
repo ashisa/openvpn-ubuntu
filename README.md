@@ -29,6 +29,7 @@ While deploying this ARM template in your Azure subscription, you will to provid
 + Subnets - Not used at the moment
 
 Following is a cursory list of things that are executed by the custom extension script after the VM has been provisioned successfully -
+
 1. Install OpenVPN and Easy-RSA
 2. Use the values provided at the time of ARM template deployment to build a Certificate Authority on the VM. This CA will be used to generate the server and client certificates required for OpenVPN
 3. Create Server and Client certificates and keys
