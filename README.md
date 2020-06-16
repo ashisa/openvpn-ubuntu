@@ -41,7 +41,7 @@ Following is a cursory list of things that are executed by the custom extension 
 This custom extesion script takes a little over 8-minutes after the VM has been provisioned to configure a fully functioning OpenVPN server. Once the deployment is successful, you can copy the client configuration file using your favorite SCP client (I use pscp) using the following syntax -
 
 ```bash
-pscp <admin user name>@<server public ip>:/etc/client-configs/files/<hostname>-client.ovpn .
+pscp <admin user name>@<server public ip>:/etc/openvpn/client-configs/files/<hostname>-client.ovpn .
 ```
 
 You can now import this client configuration file with your choice of OpenVPN client and connect from Windows, Mac or Linux machines.
